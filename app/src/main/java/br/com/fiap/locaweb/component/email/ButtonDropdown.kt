@@ -23,12 +23,11 @@ import br.com.fiap.locaweb.ui.theme.LocaWebTheme
 
 
 @Composable
-fun ButtonDropdown(labelOptions: List<String>) {
+fun ButtonDropdown(labelOptions: List<String>, onItemSelected: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     var selectedOption by remember { mutableStateOf(labelOptions[0]) }
 
     LocaWebTheme {
-
         Column {
             Box {
                 TextButton(
@@ -56,6 +55,7 @@ fun ButtonDropdown(labelOptions: List<String>) {
                             onClick = {
                                 expanded = false
                                 selectedOption = option
+                                onItemSelected(option)
                                 Log.d("FIAP", "Segundo TextButton: $selectedOption")
                             }
                         )
@@ -63,21 +63,5 @@ fun ButtonDropdown(labelOptions: List<String>) {
                 }
             }
         }
-
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-private fun ButtonDropdownPreview() {
-    val options = listOf("Marcadores", "Tarefas", "Eventos")
-    val options2 = listOf("Categorias", "Social", "Promoções", "Atualizações")
-
-    LocaWebTheme {
-        Row {
-            ButtonDropdown(options)
-            ButtonDropdown(options2)
-        }
-
     }
 }

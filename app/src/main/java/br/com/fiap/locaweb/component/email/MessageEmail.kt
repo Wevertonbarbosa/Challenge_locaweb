@@ -1,128 +1,81 @@
 package br.com.fiap.locaweb.component.email
 
-import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import br.com.fiap.locaweb.ui.theme.LocaWebTheme
-
-val categories = listOf("Social", "Promoções", "Atualizações")
-fun categoryRandom(category: List<String>) : String {
-    val random = (0..2).random()
-    return category[random]
-}
 
 @Composable
 fun MessageEmail(
-    iconeEmail: ImageVector,
-    time: String,
-    contentEmail: String,
-    category: List<String> = categories
+    email: Email,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    onImportantClick: () -> Unit,
 ) {
+    val marcadorIcone = getIcon(email)
 
-    categoryRandom(category)
-
-    LocaWebTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 10.dp, end = 10.dp, top = 10.dp)
-                .border(2.dp, Color.Gray)
-                .background(Color.White),
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-
-                ) {
-                Icon(
-                    imageVector = iconeEmail,
-                    contentDescription = "Icone Start",
-                    tint = Color.Black,
-                    modifier = Modifier.size(40.dp)
-                )
-                Text(
-                    text = time,
-                    modifier = Modifier.padding(start = 30.dp)
-                )
-                Row {
-
-                    Button(
-                        onClick = {
-                            Log.i("FIAP_LOCAWEB", "${categoryRandom(category)}")
-                        },
-                        colors = ButtonDefaults.buttonColors(Color.White),
-                        contentPadding = PaddingValues(start = 24.dp),
-                        modifier = Modifier.width(50.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = "Icone Start",
-                            tint = Color.Blue,
-                            modifier = Modifier.size(29.dp)
-                        )
-                    }
-                    Button(
-                        onClick = { /*TODO*/ },
-                        colors = ButtonDefaults.buttonColors(Color.White),
-                        contentPadding = PaddingValues(start = 15.dp),
-                        modifier = Modifier.width(50.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = "Icone Important",
-                            tint = Color.Blue,
-                            modifier = Modifier.size(29.dp)
-                        )
-                    }
-                }
-            }
-
-            Text(
-                contentEmail,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(10.dp)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .background(if (isSelected) Color.LightGray else Color.White)
+            .clickable { onClick() }
+    ) {
+        Icon(imageVector = Icons.Default.Person, contentDescription = "Icone do usuário", Modifier.size(40.dp))
+        Spacer(modifier = Modifier.width(8.dp))
+        Column(Modifier.weight(1f)) {
+            Text(text = email.horario, style = MaterialTheme.typography.bodySmall)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = email.conteudo, style = MaterialTheme.typography.bodyMedium)
+        }
+            Icon(
+                imageVector = marcadorIcone,
+                contentDescription = "Marcador Icon",
+                tint = Color.Gray,
+                modifier = Modifier.size(25.dp)
+                    .align(Alignment.CenterVertically)
             )
-
-
+        IconButton(onClick = onImportantClick) {
+            Icon(
+                imageVector = Icons.Default.Star,
+                contentDescription = "Important Icon",
+                tint = if (email.importante) Color.Blue else Color.Gray,
+                modifier = Modifier.size(29.dp)
+            )
         }
     }
 }
-
-@Preview(showBackground = true, showSystemUi = true)
 @Composable
-private fun MessageEmailPreview() {
-
-    val icone = Icons.Default.Person
-    val contentMsgEMail =
-        "Body text for whatever you’d like to suggest. Add main takeaway points, quotes."
-    LocaWebTheme {
-        MessageEmail(icone, "17:50", contentMsgEMail)
+private fun getIcon(email: Email): ImageVector {
+    val marcadorIcone = when {
+        email.marcadores.contains("Trabalho") -> Icons.Default.Build
+        email.marcadores.contains("Pessoal") -> Icons.Default.Person
+        email.marcadores.contains("Urgente") -> Icons.Default.Warning
+        email.marcadores.contains("Spam") -> Icons.Default.Clear
+        else -> Icons.Default.AddCircle
     }
+    return marcadorIcone
 }
