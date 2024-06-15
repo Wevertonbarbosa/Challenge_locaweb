@@ -1,5 +1,6 @@
 package br.com.fiap.locaweb.component.email
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -28,8 +29,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.com.fiap.locaweb.ui.theme.LocaWebTheme
 
+val categories = listOf("Social", "Promoções", "Atualizações")
+fun categoryRandom(category: List<String>) : String {
+    val random = (0..2).random()
+    return category[random]
+}
+
 @Composable
-fun MessageEmail(iconeEmail: ImageVector, time: String, contentEmail: String, category:String = "") {
+fun MessageEmail(
+    iconeEmail: ImageVector,
+    time: String,
+    contentEmail: String,
+    category: List<String> = categories
+) {
+
+    categoryRandom(category)
+
     LocaWebTheme {
         Column(
             modifier = Modifier
@@ -59,7 +74,9 @@ fun MessageEmail(iconeEmail: ImageVector, time: String, contentEmail: String, ca
                 Row {
 
                     Button(
-                        onClick = { /*TODO*/ },
+                        onClick = {
+                            Log.i("FIAP_LOCAWEB", "${categoryRandom(category)}")
+                        },
                         colors = ButtonDefaults.buttonColors(Color.White),
                         contentPadding = PaddingValues(start = 24.dp),
                         modifier = Modifier.width(50.dp)
@@ -102,8 +119,8 @@ fun MessageEmail(iconeEmail: ImageVector, time: String, contentEmail: String, ca
 @Composable
 private fun MessageEmailPreview() {
 
-    var icone = Icons.Default.Person
-    var contentMsgEMail =
+    val icone = Icons.Default.Person
+    val contentMsgEMail =
         "Body text for whatever you’d like to suggest. Add main takeaway points, quotes."
     LocaWebTheme {
         MessageEmail(icone, "17:50", contentMsgEMail)

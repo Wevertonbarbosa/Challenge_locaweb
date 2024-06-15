@@ -36,7 +36,7 @@ fun ButtonDropdown(labelOptions: List<String>) {
                         expanded = true
                         Log.d("FIAP", "Primeiro TextButton: $selectedOption")
                     }
-                    ) {
+                ) {
                     Row {
                         Text(text = selectedOption, color = Color.Black)
                         Icon(
@@ -71,7 +71,7 @@ fun ButtonDropdown(labelOptions: List<String>) {
 @Composable
 private fun ButtonDropdownPreview() {
     val options = listOf("Marcadores", "Tarefas", "Eventos")
-    val options2 = listOf("Categorias", "Social", "Promoções","Atualizações")
+    val options2 = listOf("Categorias", "Social", "Promoções", "Atualizações")
 
     LocaWebTheme {
         Row {
