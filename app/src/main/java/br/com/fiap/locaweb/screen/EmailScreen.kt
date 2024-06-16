@@ -1,5 +1,7 @@
 package br.com.fiap.locaweb.screen
 
+import android.app.DatePickerDialog
+import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,7 +20,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
@@ -32,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import br.com.fiap.locaweb.R
@@ -40,10 +42,22 @@ import br.com.fiap.locaweb.component.email.EmailsOnline
 import br.com.fiap.locaweb.component.email.MessageEmail
 import br.com.fiap.locaweb.component.email.SearchField
 import br.com.fiap.locaweb.ui.theme.LocaWebTheme
+import java.util.Calendar
 
 val marcadores = listOf("Marcadores", "Trabalho", "Pessoal", "Urgente", "Spam")
 val categorias = listOf("Categorias", "Social", "Promoções", "Atualizações")
 val todos = listOf("Todos", "Não lidas", "Lidas")
+
+fun showDatePickerDialog(context: Context, onDateSet: (year: Int, month: Int, day: Int) -> Unit) {
+    val calendar = Calendar.getInstance()
+    val year = calendar.get(Calendar.YEAR)
+    val month = calendar.get(Calendar.MONTH)
+    val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+    DatePickerDialog(context, { _, selectedYear, selectedMonth, selectedDay ->
+        onDateSet(selectedYear, selectedMonth, selectedDay)
+    }, year, month, day).show()
+}
 
 @Composable
 fun EmailScreen(isConnected: Boolean) {
@@ -61,6 +75,8 @@ fun EmailScreen(isConnected: Boolean) {
     var emailsSelecionadosIds by remember { mutableStateOf(listOf<Int>()) }
     var startButtonSelected by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current // Obtendo o contexto dentro da função @Composable
+
     LocaWebTheme {
         Column(Modifier.background(Color.White)) {
             Row {
@@ -76,7 +92,13 @@ fun EmailScreen(isConnected: Boolean) {
             )
             Row {
                 Button(
-                    onClick = { /*TODO*/ },
+                    onClick = {
+                        showDatePickerDialog(context) { year, month, day ->
+                            // Aqui você pode lidar com a data selecionada
+                            // Por exemplo, você pode fazer algo com a data selecionada:
+                            // val selectedDate = "$day/${month + 1}/$year"
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(Color.White),
                     shape = CircleShape,
                     contentPadding = PaddingValues(start = 10.dp)
@@ -142,9 +164,5 @@ fun EmailScreen(isConnected: Boolean) {
         }
     }
 }
-
-
-
-
 
 
