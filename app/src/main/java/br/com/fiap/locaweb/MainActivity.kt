@@ -19,6 +19,7 @@ import br.com.fiap.locaweb.screen.DetailScreen
 import br.com.fiap.locaweb.screen.EmailScreen
 import br.com.fiap.locaweb.screen.LoginScreen
 import br.com.fiap.locaweb.screen.PreferenceScreen
+import br.com.fiap.locaweb.screen.SendEmailScreen
 import br.com.fiap.locaweb.ui.theme.LocaWebTheme
 
 class MainActivity : ComponentActivity() {
@@ -64,6 +65,9 @@ class MainActivity : ComponentActivity() {
                                     saveThemePreference(newTheme)
                                 }
                             )
+                        }
+                        composable(route = "sendEmail") {
+                            SendEmailScreen(navController)
                         }
                     }
                 }

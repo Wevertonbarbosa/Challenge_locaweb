@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import br.com.fiap.locaweb.R
 import br.com.fiap.locaweb.component.email.ButtonDropdown
+import br.com.fiap.locaweb.component.email.ButtonSendEmail
 import br.com.fiap.locaweb.component.email.EmailsOnline
 import br.com.fiap.locaweb.component.email.MessageEmail
 import br.com.fiap.locaweb.component.email.SearchField
@@ -150,11 +152,16 @@ fun EmailScreen(isConnected: Boolean, navController: NavController) {
             ) {
                 val filteredEmails = emails.filter {
                     (categoriaSelecionada == "Categorias" || it.categoria == categoriaSelecionada) &&
-                            (marcadorSelecionado == "Marcadores" || it.marcadores.contains(marcadorSelecionado)) &&
+                            (marcadorSelecionado == "Marcadores" || it.marcadores.contains(
+                                marcadorSelecionado
+                            )) &&
                             (selecaoEmailsLidosOuNao == "Todos" ||
                                     (selecaoEmailsLidosOuNao == "Lidas" && it.lido) ||
                                     (selecaoEmailsLidosOuNao == "Não lidas" && !it.lido)) &&
-                            (procurar.isEmpty() || it.conteudo.contains(procurar, ignoreCase = true))
+                            (procurar.isEmpty() || it.conteudo.contains(
+                                procurar,
+                                ignoreCase = true
+                            ))
                 }.sortedByDescending { it.importante }
 
                 LazyColumn(modifier = Modifier.fillMaxSize(), state = scrollState) {
@@ -181,11 +188,26 @@ fun EmailScreen(isConnected: Boolean, navController: NavController) {
                 }
             }
         }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            ButtonSendEmail(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd),
+                onClick = {
+                    navController.navigate("sendEmail")
+                }
+            )
+        }
     }
 }
 
+
 private fun loadThemePreference(context: Context): Boolean {
     val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-    return prefs.getBoolean("theme", false) // false é o valor padrão para tema claro
+    return prefs.getBoolean("theme", false)
 }
 
