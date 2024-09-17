@@ -36,46 +36,49 @@ fun MessageEmail(
     onImportantClick: () -> Unit,
 ) {
     val marcadorIcone = getIcon(email)
+    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.background
+    val textColor = MaterialTheme.colorScheme.onBackground
+    val importantIconColor = if (email.importante) MaterialTheme.colorScheme.primary else Color.Gray
 
     Row(
         Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .background(if (isSelected) Color.LightGray else Color.White)
+            .background(backgroundColor)
             .clickable { onClick() }
     ) {
-        Icon(imageVector = Icons.Default.Person, contentDescription = "Icone do usuário", Modifier.size(40.dp))
+        Icon(imageVector = Icons.Default.Person, contentDescription = "Ícone do usuário", Modifier.size(40.dp))
         Spacer(modifier = Modifier.width(8.dp))
         Column(Modifier.weight(1f)) {
-            Text(text = email.horario, style = MaterialTheme.typography.bodySmall)
+            Text(text = email.horario, style = MaterialTheme.typography.bodySmall, color = textColor)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = email.conteudo, style = MaterialTheme.typography.bodyMedium)
+            Text(text = email.conteudo, style = MaterialTheme.typography.bodyMedium, color = textColor)
         }
-            Icon(
-                imageVector = marcadorIcone,
-                contentDescription = "Marcador Icon",
-                tint = Color.Gray,
-                modifier = Modifier.size(25.dp)
-                    .align(Alignment.CenterVertically)
-            )
+        Icon(
+            imageVector = marcadorIcone,
+            contentDescription = "Ícone do marcador",
+            tint = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.size(25.dp)
+                .align(Alignment.CenterVertically)
+        )
         IconButton(onClick = onImportantClick) {
             Icon(
                 imageVector = Icons.Default.Star,
-                contentDescription = "Important Icon",
-                tint = if (email.importante) Color.Blue else Color.Gray,
+                contentDescription = "Ícone de importância",
+                tint = importantIconColor,
                 modifier = Modifier.size(29.dp)
             )
         }
     }
 }
+
 @Composable
 private fun getIcon(email: Email): ImageVector {
-    val marcadorIcone = when {
+    return when {
         email.marcadores.contains("Trabalho") -> Icons.Default.Build
         email.marcadores.contains("Pessoal") -> Icons.Default.Person
         email.marcadores.contains("Urgente") -> Icons.Default.Warning
         email.marcadores.contains("Spam") -> Icons.Default.Clear
         else -> Icons.Default.AddCircle
     }
-    return marcadorIcone
 }

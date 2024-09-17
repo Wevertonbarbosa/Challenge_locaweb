@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -21,6 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import br.com.fiap.locaweb.ui.theme.LocaWebTheme
 
+
+//AJUSTAR O BOTÃO PARA TER O EFEITO DO TEMA ESCURO/CLARO
 
 @Composable
 fun ButtonDropdown(labelOptions: List<String>, onItemSelected: (String) -> Unit) {
@@ -56,8 +59,11 @@ fun ButtonDropdown(labelOptions: List<String>, onItemSelected: (String) -> Unit)
                                 expanded = false
                                 selectedOption = option
                                 onItemSelected(option)
-                                Log.d("FIAP", "Segundo TextButton: $selectedOption")
-                            }
+                            },
+                            // Adicionando parâmetros atualizados
+                            enabled = true,
+                            colors = MenuDefaults.itemColors(),
+                            contentPadding = MenuDefaults.DropdownMenuItemContentPadding
                         )
                     }
                 }

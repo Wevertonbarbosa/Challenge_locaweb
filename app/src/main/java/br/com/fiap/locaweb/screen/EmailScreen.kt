@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,10 +22,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import br.com.fiap.locaweb.R
 import br.com.fiap.locaweb.component.email.ButtonDropdown
 import br.com.fiap.locaweb.component.email.EmailsOnline
@@ -60,28 +65,34 @@ fun showDatePickerDialog(context: Context, onDateSet: (year: Int, month: Int, da
 }
 
 @Composable
-fun EmailScreen(isConnected: Boolean) {
+fun EmailScreen(isConnected: Boolean, navController: NavController) {
+    val context = LocalContext.current
+    val isDarkTheme = remember { mutableStateOf(loadThemePreference(context)) }
 
-    var emails by remember {
-        mutableStateOf(EmailsOnline.emailsSincronizado)
-    }
+    LocaWebTheme(darkTheme = isDarkTheme.value) {
+        var emails by remember { mutableStateOf(EmailsOnline.emailsSincronizado) }
+        var procurar by remember { mutableStateOf("") }
+        var categoriaSelecionada by remember { mutableStateOf(categorias[0]) }
+        var marcadorSelecionado by remember { mutableStateOf(marcadores[0]) }
+        var selecaoEmailsLidosOuNao by remember { mutableStateOf(todos[0]) }
+        val scrollState = rememberLazyListState()
+        var emailsSelecionadosIds by remember { mutableStateOf(listOf<Int>()) }
+        var startButtonSelected by remember { mutableStateOf(false) }
 
-    var procurar by remember { mutableStateOf("") }
-
-    var categoriaSelecionada by remember { mutableStateOf(categorias[0]) }
-    var marcadorSelecionado by remember { mutableStateOf(marcadores[0]) }
-    var selecaoEmailsLidosOuNao by remember { mutableStateOf(todos[0]) }
-    val scrollState = rememberLazyListState()
-    var emailsSelecionadosIds by remember { mutableStateOf(listOf<Int>()) }
-    var startButtonSelected by remember { mutableStateOf(false) }
-
-    val context = LocalContext.current // Obtendo o contexto dentro da função @Composable
-
-    LocaWebTheme {
-        Column(Modifier.background(Color.White)) {
-            Row {
-                ButtonDropdown(marcadores, onItemSelected = { marcadorSelecionado = it })
+        Column(Modifier.background(MaterialTheme.colorScheme.background)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 ButtonDropdown(categorias, onItemSelected = { categoriaSelecionada = it })
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(onClick = {
+                    navController.navigate("settings")
+                }) {
+                    Icon(Icons.Filled.Settings, contentDescription = "Configurações")
+                }
             }
             SearchField(
                 modifier = Modifier.fillMaxWidth(),
@@ -94,36 +105,36 @@ fun EmailScreen(isConnected: Boolean) {
                 Button(
                     onClick = {
                         showDatePickerDialog(context) { year, month, day ->
-                            // Aqui você pode lidar com a data selecionada
-                            // Por exemplo, você pode fazer algo com a data selecionada:
-                            // val selectedDate = "$day/${month + 1}/$year"
+                            // Lidar com a data selecionada
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(Color.White),
+                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.surface),
                     shape = CircleShape,
                     contentPadding = PaddingValues(start = 10.dp)
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.calendar),
-                        contentDescription = "calendario",
+                        contentDescription = "calendário",
                         Modifier.size(36.dp)
                     )
                 }
                 Button(
-                    onClick = {  startButtonSelected = !startButtonSelected
-                        if (startButtonSelected) {
-                            emails = emails.filter { it.importante }
+                    onClick = {
+                        startButtonSelected = !startButtonSelected
+                        emails = if (startButtonSelected) {
+                            emails.filter { it.importante }
                         } else {
-                            emails = EmailsOnline.emailsSincronizado
-                        } },
-                    colors = ButtonDefaults.buttonColors(Color.White),
+                            EmailsOnline.emailsSincronizado
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.surface),
                     border = BorderStroke(width = 1.dp, color = Color.LightGray),
                     contentPadding = PaddingValues(all = 2.dp),
                     modifier = Modifier.width(50.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Star,
-                        contentDescription = "Icone Start",
+                        contentDescription = "Icone Star",
                         tint = if (startButtonSelected) Color.Blue else Color.Gray,
                         modifier = Modifier.size(29.dp)
                     )
@@ -131,7 +142,12 @@ fun EmailScreen(isConnected: Boolean) {
                 Spacer(modifier = Modifier.weight(1f))
                 ButtonDropdown(todos, onItemSelected = { selecaoEmailsLidosOuNao = it })
             }
-            Box(modifier = Modifier.weight(1f).fillMaxSize().padding(16.dp)) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
                 val filteredEmails = emails.filter {
                     (categoriaSelecionada == "Categorias" || it.categoria == categoriaSelecionada) &&
                             (marcadorSelecionado == "Marcadores" || it.marcadores.contains(marcadorSelecionado)) &&
@@ -146,7 +162,10 @@ fun EmailScreen(isConnected: Boolean) {
                         MessageEmail(
                             email = email,
                             isSelected = emailsSelecionadosIds.contains(email.id),
-                            onClick = { emailsSelecionadosIds = listOf(email.id) },
+                            onClick = {
+                                emailsSelecionadosIds = listOf(email.id)
+                                navController.navigate("detail")
+                            },
                             onImportantClick = {
                                 emails = emails.map {
                                     if (it.id == email.id) it.copy(importante = !email.importante) else it
@@ -165,4 +184,8 @@ fun EmailScreen(isConnected: Boolean) {
     }
 }
 
+private fun loadThemePreference(context: Context): Boolean {
+    val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    return prefs.getBoolean("theme", false) // false é o valor padrão para tema claro
+}
 
