@@ -10,7 +10,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -42,7 +45,6 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Set up the navigation host
                     NavHost(
                         navController = navController,
                         startDestination = "login"
@@ -53,9 +55,11 @@ class MainActivity : ComponentActivity() {
                         composable(route = "email") {
                             EmailScreen(isInternetConnected(), navController)
                         }
-                        composable(route = "detail") {
-                            DetailScreen(navController)
+                        composable("detail/{id}") { backStackEntry ->
+                            val emailId = backStackEntry.arguments?.getString("id")
+                            DetailScreen(emailId = emailId, navController = navController)
                         }
+
                         composable(route = "settings") {
                             PreferenceScreen(
                                 navController = navController,
@@ -75,7 +79,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Function to check internet connectivity
     private fun isInternetConnected(): Boolean {
         val connectivityManager =
             MainActivity.instance.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -92,13 +95,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Function to load the theme preference from shared preferences
     private fun loadThemePreference(): Boolean {
         val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
         return prefs.getBoolean("theme", false) // Default to light theme
     }
 
-    // Function to save the theme preference to shared preferences
     private fun saveThemePreference(isDark: Boolean) {
         val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
         prefs.edit().putBoolean("theme", isDark).apply()

@@ -26,19 +26,28 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import br.com.fiap.locaweb.model.EmailDto
 
 @Composable
 fun MessageEmail(
-    email: Email,
+    email: EmailDto,
+    fontSize: TextUnit,
     isSelected: Boolean,
     onClick: () -> Unit,
     onImportantClick: () -> Unit,
 ) {
     val marcadorIcone = getIcon(email)
-    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.background
+    val backgroundColor =
+        if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.background
     val textColor = MaterialTheme.colorScheme.onBackground
     val importantIconColor = if (email.importante) MaterialTheme.colorScheme.primary else Color.Gray
+    val regex = """(\d{2}:\d{2})""".toRegex()
+    var data = email.date
+    val matchResult = regex.find(data)
+    val dataFormatada: String = matchResult?.value ?: "Formato inválido"
+
 
     Row(
         Modifier
@@ -47,18 +56,33 @@ fun MessageEmail(
             .background(backgroundColor)
             .clickable { onClick() }
     ) {
-        Icon(imageVector = Icons.Default.Person, contentDescription = "Ícone do usuário", Modifier.size(40.dp))
+        Icon(
+            imageVector = Icons.Default.Person,
+            contentDescription = "Ícone do usuário",
+            Modifier.size(40.dp)
+        )
         Spacer(modifier = Modifier.width(8.dp))
         Column(Modifier.weight(1f)) {
-            Text(text = email.horario, style = MaterialTheme.typography.bodySmall, color = textColor)
+            Text(
+                text = dataFormatada,
+                style = MaterialTheme.typography.bodySmall,
+                color = textColor,
+                fontSize = fontSize
+            )
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = email.conteudo, style = MaterialTheme.typography.bodyMedium, color = textColor)
+            Text(
+                text = email.subject,
+                style = MaterialTheme.typography.bodyMedium,
+                color = textColor,
+                fontSize = fontSize
+            )
         }
         Icon(
             imageVector = marcadorIcone,
             contentDescription = "Ícone do marcador",
             tint = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.size(25.dp)
+            modifier = Modifier
+                .size(25.dp)
                 .align(Alignment.CenterVertically)
         )
         IconButton(onClick = onImportantClick) {
@@ -73,12 +97,12 @@ fun MessageEmail(
 }
 
 @Composable
-private fun getIcon(email: Email): ImageVector {
+private fun getIcon(email: EmailDto): ImageVector {
     return when {
-        email.marcadores.contains("Trabalho") -> Icons.Default.Build
-        email.marcadores.contains("Pessoal") -> Icons.Default.Person
-        email.marcadores.contains("Urgente") -> Icons.Default.Warning
-        email.marcadores.contains("Spam") -> Icons.Default.Clear
+        email.category.contains("Trabalho") -> Icons.Default.Build
+        email.category.contains("Pessoal") -> Icons.Default.Person
+        email.category.contains("Urgente") -> Icons.Default.Warning
+        email.category.contains("Spam") -> Icons.Default.Clear
         else -> Icons.Default.AddCircle
     }
 }

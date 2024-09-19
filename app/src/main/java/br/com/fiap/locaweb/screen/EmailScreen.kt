@@ -41,14 +41,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import br.com.fiap.locaweb.R
 import br.com.fiap.locaweb.component.email.ButtonDropdown
 import br.com.fiap.locaweb.component.email.ButtonSendEmail
-import br.com.fiap.locaweb.component.email.EmailsOnline
 import br.com.fiap.locaweb.component.email.MessageEmail
 import br.com.fiap.locaweb.component.email.SearchField
+import br.com.fiap.locaweb.model.DatailEmailDto
+import br.com.fiap.locaweb.model.EmailDto
+import br.com.fiap.locaweb.service.RetrofitClient
 import br.com.fiap.locaweb.ui.theme.LocaWebTheme
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.util.Calendar
 
 val marcadores = listOf("Marcadores", "Trabalho", "Pessoal", "Urgente", "Spam")
@@ -70,9 +79,11 @@ fun showDatePickerDialog(context: Context, onDateSet: (year: Int, month: Int, da
 fun EmailScreen(isConnected: Boolean, navController: NavController) {
     val context = LocalContext.current
     val isDarkTheme = remember { mutableStateOf(loadThemePreference(context)) }
+    var selectedFontSize by remember { mutableStateOf(16.sp) }
 
     LocaWebTheme(darkTheme = isDarkTheme.value) {
-        var emails by remember { mutableStateOf(EmailsOnline.emailsSincronizado) }
+        var allEmails by remember { mutableStateOf<List<EmailDto>>(emptyList()) }
+        var emails by remember { mutableStateOf<List<EmailDto>>(emptyList()) }
         var procurar by remember { mutableStateOf("") }
         var categoriaSelecionada by remember { mutableStateOf(categorias[0]) }
         var marcadorSelecionado by remember { mutableStateOf(marcadores[0]) }
@@ -80,6 +91,16 @@ fun EmailScreen(isConnected: Boolean, navController: NavController) {
         val scrollState = rememberLazyListState()
         var emailsSelecionadosIds by remember { mutableStateOf(listOf<Int>()) }
         var startButtonSelected by remember { mutableStateOf(false) }
+        var selectedEmail by remember { mutableStateOf<DatailEmailDto?>(null) }
+
+        LaunchedEffect(Unit) {
+            try {
+                allEmails = getEmail()
+                emails = allEmails
+            } catch (e: Exception) {
+                println("Erro ao buscar emails: ${e.message}")
+            }
+        }
 
         Column(Modifier.background(MaterialTheme.colorScheme.background)) {
             Row(
@@ -96,6 +117,7 @@ fun EmailScreen(isConnected: Boolean, navController: NavController) {
                     Icon(Icons.Filled.Settings, contentDescription = "Configurações")
                 }
             }
+
             SearchField(
                 modifier = Modifier.fillMaxWidth(),
                 hintText = "Pesquisar",
@@ -103,11 +125,19 @@ fun EmailScreen(isConnected: Boolean, navController: NavController) {
                 onValueChange = { procurar = it },
                 icon = Icons.Default.Search
             )
+
             Row {
                 Button(
                     onClick = {
                         showDatePickerDialog(context) { year, month, day ->
-                            // Lidar com a data selecionada
+                            val selectedDate = LocalDate.of(
+                                year,
+                                month + 1,
+                                day
+                            )
+                            CoroutineScope(Dispatchers.IO).launch {
+                                emails = getListDataEmail(selectedDate)
+                            }
                         }
                     },
                     colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.surface),
@@ -120,13 +150,14 @@ fun EmailScreen(isConnected: Boolean, navController: NavController) {
                         Modifier.size(36.dp)
                     )
                 }
+
                 Button(
                     onClick = {
                         startButtonSelected = !startButtonSelected
                         emails = if (startButtonSelected) {
-                            emails.filter { it.importante }
+                            allEmails.filter { it.importante }
                         } else {
-                            EmailsOnline.emailsSincronizado
+                            allEmails
                         }
                     },
                     colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.surface),
@@ -144,6 +175,7 @@ fun EmailScreen(isConnected: Boolean, navController: NavController) {
                 Spacer(modifier = Modifier.weight(1f))
                 ButtonDropdown(todos, onItemSelected = { selecaoEmailsLidosOuNao = it })
             }
+
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -151,36 +183,37 @@ fun EmailScreen(isConnected: Boolean, navController: NavController) {
                     .padding(16.dp)
             ) {
                 val filteredEmails = emails.filter {
-                    (categoriaSelecionada == "Categorias" || it.categoria == categoriaSelecionada) &&
-                            (marcadorSelecionado == "Marcadores" || it.marcadores.contains(
-                                marcadorSelecionado
-                            )) &&
+                    (categoriaSelecionada == "Categorias" || it.category == categoriaSelecionada) &&
                             (selecaoEmailsLidosOuNao == "Todos" ||
-                                    (selecaoEmailsLidosOuNao == "Lidas" && it.lido) ||
-                                    (selecaoEmailsLidosOuNao == "Não lidas" && !it.lido)) &&
-                            (procurar.isEmpty() || it.conteudo.contains(
-                                procurar,
-                                ignoreCase = true
-                            ))
+                                    (selecaoEmailsLidosOuNao == "Lidas" && it.read) ||
+                                    (selecaoEmailsLidosOuNao == "Não lidas" && !it.read)) &&
+                            (procurar.isEmpty() || it.subject.contains(procurar, ignoreCase = true))
                 }.sortedByDescending { it.importante }
 
                 LazyColumn(modifier = Modifier.fillMaxSize(), state = scrollState) {
                     items(filteredEmails) { email ->
                         MessageEmail(
                             email = email,
+                            fontSize = selectedFontSize,
                             isSelected = emailsSelecionadosIds.contains(email.id),
                             onClick = {
                                 emailsSelecionadosIds = listOf(email.id)
-                                navController.navigate("detail")
+                                navController.navigate("detail/${email.id}")
                             },
                             onImportantClick = {
-                                emails = emails.map {
+                                allEmails = allEmails.map {
                                     if (it.id == email.id) it.copy(importante = !email.importante) else it
+                                }
+                                emails = if (startButtonSelected) {
+                                    allEmails.filter { it.importante }
+                                } else {
+                                    allEmails
                                 }
                             }
                         )
                     }
                 }
+
                 LaunchedEffect(emailsSelecionadosIds) {
                     if (emailsSelecionadosIds.isNotEmpty()) {
                         scrollState.scrollToItem(filteredEmails.indexOfFirst { it.id == emailsSelecionadosIds.first() })
@@ -210,4 +243,42 @@ private fun loadThemePreference(context: Context): Boolean {
     val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
     return prefs.getBoolean("theme", false)
 }
+
+suspend fun getEmail(): List<EmailDto> {
+    val url = "http://10.0.2.2:8080/email"
+    val headers = mapOf("Content-Type" to "application/json")
+
+    return try {
+        println("Fazendo a requisição GET para $url")
+        val responseBody = RetrofitClient.get(url, headers)
+        val json = responseBody.string()
+
+        println("Resposta recebida: $json")
+        val emailListType = object : TypeToken<List<EmailDto>>() {}.type
+        return Gson().fromJson<List<EmailDto>>(json, emailListType)
+    } catch (e: Exception) {
+        println("Erro ao fazer a requisição: ${e.message}")
+        emptyList()
+    }
+}
+
+
+suspend fun getListDataEmail(date: LocalDate): List<EmailDto> {
+    val url = "http://10.0.2.2:8080/email/date?date=$date"
+    val headers = mapOf("Content-Type" to "application/json")
+
+    return try {
+        println("Fazendo a requisição GET para $url")
+        val responseBody = RetrofitClient.get(url, headers)
+        val json = responseBody.string()
+
+        println("Resposta recebida: $json")
+        val emailListType = object : TypeToken<List<EmailDto>>() {}.type
+        Gson().fromJson<List<EmailDto>>(json, emailListType)
+    } catch (e: Exception) {
+        println("Erro ao fazer a requisição: ${e.message}")
+        emptyList()
+    }
+}
+
 

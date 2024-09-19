@@ -12,12 +12,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import br.com.fiap.locaweb.ui.theme.LocaWebTheme
 
 @Composable
-fun ButtonSendEmail(onClick: () -> Unit,  modifier: Modifier = Modifier) {
+fun ButtonSendEmail(onClick: () -> Unit, modifier: Modifier = Modifier) {
     // Box to align the FloatingActionButton
     Box(
         modifier = Modifier

@@ -1,16 +1,40 @@
 package br.com.fiap.locaweb.screen
 
 import android.content.Context
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
+import androidx.compose.material3.Divider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.TextUnit
+import br.com.fiap.locaweb.service.EmailManager
+import br.com.fiap.locaweb.service.RetrofitClient
+import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+
 
 @Composable
 fun PreferenceScreen(
@@ -19,6 +43,7 @@ fun PreferenceScreen(
     onThemeChanged: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var fontSize by remember { mutableStateOf(loadFontSizePreference(context)) }
 
     Column(
@@ -79,11 +104,21 @@ fun PreferenceScreen(
 
         Button(
             onClick = {
+                coroutineScope.launch {
+                    // Chama a função sendPreferences dentro da coroutine
+                    sendPreferences(
+                        isDarkTheme = isDarkTheme,
+                        fontSize = fontSize
+                    )
 
-                saveThemePreference(context, isDarkTheme)
-                saveFontSizePreference(context, fontSize)
-                navController.navigate("email") {
-                    popUpTo("settings") { inclusive = true }
+                    // Salva as preferências localmente
+                    saveThemePreference(context, isDarkTheme)
+                    saveFontSizePreference(context, fontSize)
+
+                    // Navega para a tela de email
+                    navController.navigate("email") {
+                        popUpTo("settings") { inclusive = true }
+                    }
                 }
             },
             modifier = Modifier
@@ -109,4 +144,24 @@ private fun saveThemePreference(context: Context, isDark: Boolean) {
 private fun saveFontSizePreference(context: Context, fontSize: TextUnit) {
     val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
     prefs.edit().putFloat("font_size", fontSize.value).apply()
+}
+
+
+suspend fun sendPreferences(isDarkTheme: Boolean, fontSize: TextUnit) {
+    val url = "http://10.0.2.2:8080/preference"
+    val headers = mapOf("Content-Type" to "application/json")
+    val theme = if (isDarkTheme) "dark" else "light"
+    val fontSizeValue = fontSize.value.toInt()
+
+    val payload = """
+        {
+            "email": "${EmailManager.getEmail()}",
+            "theme": "$theme",
+            "font_size": $fontSizeValue
+        }
+    """.trimIndent()
+
+    val body: RequestBody = payload.toRequestBody("application/json".toMediaTypeOrNull())
+
+    RetrofitClient.post(url, headers, body)
 }
